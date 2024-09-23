@@ -53,7 +53,8 @@ router.delete('/delete/:slug', protectedMiddleware, ownerMiddleware, async (req,
 router.post('/file-upload', protectedMiddleware, ownerMiddleware, upload.single('image'), async (req, res) => {
     try {
         const dataProduct = await fileUpload(req)
-
+        console.log(dataProduct);
+        
         res.status(dataProduct.statusCode).json(dataProduct)
     } catch (error) {
         res.json(error)

@@ -1,5 +1,7 @@
 import slugify from "slugify";
 import Product from "../models/product.js";
+import { v2 as cloudinary } from 'cloudinary';
+import streamifier from 'streamifier';
 
 const createSlug = (text) => {
 return slugify(text, {
@@ -116,19 +118,29 @@ export const deleteProduct = async (req) => {
 }
 
 export const fileUpload = async (req) => {
-    const file = req.file
-    if (!file) {
-        return {
-            statusCode: 400,
-            message: 'Tidak ada file yang diiput',
-        };
-    }
+    return new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+            {
+                folder: 'uploads',
+                allowed_formats: ['jpg', 'png', 'webp']
+            },
+            (err, result) => {
+                if (err) {
+                    return reject({
+                        statusCode: 500,
+                        message: 'Failed to upload image',
+                        error: err.message
+                    });
+                }
 
-    const imageFileName = file.filename
-    const pathImageFile = `/uploads/${imageFileName}`
-    return {
-        statusCode: 200,
-        message: 'Image berhasil di upload',
-        data: pathImageFile
-    };
+                resolve({
+                    statusCode: 200,
+                    message: 'Image successfully uploaded',
+                    url: result.secure_url
+                });
+            }
+        );
+
+        streamifier.createReadStream(req.file.buffer).pipe(stream);
+    });
 }
